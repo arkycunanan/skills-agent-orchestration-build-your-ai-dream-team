@@ -1,0 +1,39 @@
+{
+  "projects": [
+    {
+      "name": "Project Pulse Dashboard",
+      "owner": "alex-morgan",
+      "status": "active",
+      "recentActivity": "Merged PR #18: Add real-time status indicators",
+      "priority": "high"
+    },
+    {
+      "name": "Auth Service Redesign",
+      "owner": "priya-sharma",
+      "status": "active",
+      "recentActivity": "Opened PR #7: Migrate to OAuth 2.1 flow",
+      "priority": "high"
+    },
+    {
+      "name": "Mobile Onboarding Revamp",
+      "owner": "carlos-reyes",
+      "status": "on-hold",
+      "recentActivity": "Commented on issue #34: Awaiting UX design sign-off",
+      "priority": "medium"
+    },
+    {
+      "name": "Data Pipeline Optimization",
+      "owner": "sam-liu",
+      "status": "active",
+      "recentActivity": "Pushed commit a3f9c1: Reduce batch processing latency by 40%",
+      "priority": "medium"
+    },
+    {
+      "name": "Legacy API Deprecation",
+      "owner": "jordan-bell",
+      "status": "completed",
+      "recentActivity": "Closed issue #101: All v1 endpoints successfully sunset",
+      "priority": "low"
+    }
+  ]
+}

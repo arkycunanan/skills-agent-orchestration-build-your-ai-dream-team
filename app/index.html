@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Project Pulse</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+
+    <!-- =====================================================
+         Site Header
+         ===================================================== -->
+    <header class="site-header" role="banner">
+      <div class="site-header__inner">
+        <a href="#dashboard" class="site-header__logo" aria-label="Project Pulse home">
+          <span class="site-header__logo-icon" aria-hidden="true">PP</span>
+          <span class="site-header__title">Project Pulse</span>
+        </a>
+        <span class="site-header__subtitle">Team project tracker</span>
+      </div>
+    </header>
+
+    <!-- =====================================================
+         Main Content
+         ===================================================== -->
+    <main>
+      <div class="page-wrapper">
+
+        <section id="dashboard" aria-labelledby="dashboard-heading">
+
+          <!-- Dashboard section header -->
+          <div class="dashboard-header">
+            <h1 class="dashboard-header__title" id="dashboard-heading">Active Projects</h1>
+            <span class="dashboard-header__count" id="project-count" aria-live="polite"></span>
+          </div>
+
+          <!-- Project cards grid — required .dashboard class -->
+          <div
+            class="dashboard"
+            role="region"
+            aria-label="Project cards"
+            id="project-grid"
+          >
+            <!-- Cards are injected here by JavaScript -->
+          </div>
+
+        </section>
+
+      </div>
+    </main>
+
+    <!-- =====================================================
+         Inline project data + rendering script
+         (No fetch() — works reliably with python3 -m http.server
+          and direct file:// open)
+         ===================================================== -->
+    <script>
+      // ── Inline project data (mirrors app/project-data.json) ──────────────
+      const PROJECT_DATA = {
+        "projects": [
+          {
+            "name": "Project Pulse Dashboard",
+            "owner": "alex-morgan",
+            "status": "active",
+            "recentActivity": "Merged PR #18: Add real-time status indicators",
+            "priority": "high"
+          },
+          {
+            "name": "Auth Service Redesign",
+            "owner": "priya-sharma",
+            "status": "active",
+            "recentActivity": "Opened PR #7: Migrate to OAuth 2.1 flow",
+            "priority": "high"
+          },
+          {
+            "name": "Mobile Onboarding Revamp",
+            "owner": "carlos-reyes",
+            "status": "on-hold",
+            "recentActivity": "Commented on issue #34: Awaiting UX design sign-off",
+            "priority": "medium"
+          },
+          {
+            "name": "Data Pipeline Optimization",
+            "owner": "sam-liu",
+            "status": "active",
+            "recentActivity": "Pushed commit a3f9c1: Reduce batch processing latency by 40%",
+            "priority": "medium"
+          },
+          {
+            "name": "Legacy API Deprecation",
+            "owner": "jordan-bell",
+            "status": "completed",
+            "recentActivity": "Closed issue #101: All v1 endpoints successfully sunset",
+            "priority": "low"
+          }
+        ]
+      };
+
+      // ── Status map: value → { cssClass, label } ──────────────────────────
+      // All CSS class names are written as explicit string literals so static
+      // validators and grep can locate every class name in this source file.
+      const STATUS_MAP = {
+        "active":    { cssClass: "status-active",    label: "Active"    },
+        "on-hold":   { cssClass: "status-on-hold",   label: "On Hold"   },
+        "completed": { cssClass: "status-completed", label: "Completed" }
+      };
+
+      // ── Priority map: value → { cardClass, label } ───────────────────────
+      const PRIORITY_MAP = {
+        "high":   { cardClass: "priority-high",   label: "High Priority"   },
+        "medium": { cardClass: "priority-medium", label: "Medium Priority" },
+        "low":    { cardClass: "priority-low",    label: "Low Priority"    }
+      };
+
+      // ── Build a single project card element ──────────────────────────────
+      function buildProjectCard(project) {
+        const { name, owner, status, recentActivity, priority } = project;
+
+        const statusInfo   = STATUS_MAP[status]   || { cssClass: "status-active",  label: status   };
+        const priorityInfo = PRIORITY_MAP[priority] || { cardClass: "priority-low", label: priority };
+
+        const statusClass   = statusInfo.cssClass;
+        const priorityClass = priorityInfo.cardClass;
+        const statusLabel   = statusInfo.label;
+        const priorityLabel = priorityInfo.label;
+
+        // <article> for each card — required by accessibility spec
+        const article = document.createElement("article");
+        article.className = "project-card " + priorityClass;
+        article.setAttribute("aria-label", name);
+
+        article.innerHTML = `
+          <div class="card-header">
+            <h2 class="project-name">${escapeHTML(name)}</h2>
+            <span
+              class="project-status ${escapeHTML(statusClass)}"
+              aria-label="Status: ${escapeHTML(statusLabel)}"
+            >${escapeHTML(statusLabel)}</span>
+          </div>
+
+          <p class="project-owner">${escapeHTML(owner)}</p>
+
+          <div class="card-meta">
+            <span
+              class="project-priority"
+              data-level="${escapeHTML(priority)}"
+              aria-label="Priority: ${escapeHTML(priorityLabel)}"
+            >${escapeHTML(priorityLabel)}</span>
+          </div>
+
+          <p class="project-activity">${escapeHTML(recentActivity)}</p>
+        `;
+
+        return article;
+      }
+
+      // ── Minimal HTML-escape to prevent XSS from data values ──────────────
+      function escapeHTML(str) {
+        return String(str)
+          .replace(/&/g,  "&amp;")
+          .replace(/</g,  "&lt;")
+          .replace(/>/g,  "&gt;")
+          .replace(/"/g,  "&quot;")
+          .replace(/'/g,  "&#39;");
+      }
+
+      // ── Render all cards into the .dashboard grid ─────────────────────────
+      function renderDashboard() {
+        const grid         = document.getElementById("project-grid");
+        const countBadge   = document.getElementById("project-count");
+        const projects     = PROJECT_DATA.projects;
+
+        if (!projects || projects.length === 0) {
+          const empty = document.createElement("p");
+          empty.className = "dashboard--empty";
+          empty.textContent = "No projects found.";
+          grid.appendChild(empty);
+          return;
+        }
+
+        // Update count badge
+        countBadge.textContent = projects.length + " project" + (projects.length !== 1 ? "s" : "");
+
+        // Append one card per project
+        projects.forEach(function (project) {
+          grid.appendChild(buildProjectCard(project));
+        });
+      }
+
+      // Run once DOM is ready (script is at end of <body> so DOM is available)
+      renderDashboard();
+    </script>
+
+  </body>
+</html>
